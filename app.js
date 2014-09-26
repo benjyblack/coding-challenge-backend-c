@@ -10,6 +10,6 @@ app.get('*', function(req, res) {
 	res.status(404).send('Not found');
 });
 
-var server = app.listen(port, function() {
+module.exports = app.listen(port, function() {
 	console.log('Server running at http://127.0.0.1:%d/suggestions', port);
 });
