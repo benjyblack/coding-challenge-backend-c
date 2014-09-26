@@ -1,16 +1,15 @@
-var http = require('http');
+var express = require('express');
+var app = express();
 var port = process.env.PORT || 2345;
 
-module.exports = http.createServer(function (req, res) {
-  res.writeHead(404, {'Content-Type': 'text/plain'});
+app.get('/suggestions', function(req, res) {
+	res.json({ suggestions: [] });
+});
 
-  if (req.url.indexOf('/suggestions') === 0) {
-    res.end(JSON.stringify({
-      suggestions: []
-    }));
-  } else {
-    res.end();
-  }
-}).listen(port, '127.0.0.1');
+app.get('*', function(req, res) {
+	res.status(404).send('Not found');
+});
 
-console.log('Server running at http://127.0.0.1:%d/suggestions', port);
+var server = app.listen(port, function() {
+	console.log('Server running at http://127.0.0.1:%d/suggestions', port);
+});
