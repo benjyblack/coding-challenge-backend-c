@@ -12,6 +12,7 @@
   "dependencies": {
     "chai": "^1.9.1",
     "express": "^4.9.5",
+    "fast-csv": "^0.5.2",
     "mocha": "^1.18.2",
     "supertest": "^0.11.0"
   },
