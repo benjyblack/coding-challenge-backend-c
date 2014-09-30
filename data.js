@@ -31,21 +31,49 @@ module.exports.addRecords = function(filename) {
 }
 
 module.exports.getSimilarRecords = function(input) {
-	var similarRecords = [];
+	var similarRecords = sortedRecords = [];
 
 	_(records).forEach(function(record, index) {
 		if (record.name.indexOf(input) != -1) {
-			
+	
 			similarRecords.push({
 				name: getFullLocationName(record),
 				latitude: record.lat,
 				longitude: record.long,
-				score: 0
+				score: evaluateRecord(input, record)
 			});
 		}
 	});
 
-	return similarRecords;
+	// Sort records by score in descending order
+	sortedRecords = _.sortBy(similarRecords, function(record) { return -(record.score); });
+
+	return sortedRecords;
+}
+
+var evaluateRecord = function(input, record) {
+	// Heuristics - proximity, population, character match
+	// Weights chosen arbitrarily
+	var proximityWeight = 0.5;
+	var populationSizeWeight = 0.3;
+	var characterMatchWeight = 0.2;
+
+	// Proximity
+	var proximityTotal = 0.3;
+
+	// Population size
+	var threshold = Math.pow(10,6);
+	var populationRatio = Math.min(record.population / threshold, 1.0); 
+	var populationSizeTotal = populationRatio * populationSizeWeight;
+
+	// Character match
+	var fullName = getFullLocationName(record);
+	var percentOfChars = input.length/fullName.length;
+	var characterMatchTotal = percentOfChars * characterMatchWeight;
+
+	var total = characterMatchTotal + populationSizeTotal + proximityTotal;
+
+	return Math.round(total*10)/10;
 }
 
 var getFullLocationName = function(record) {
