@@ -3,6 +3,8 @@ var fs = require('fs');
 var q = require('q');
 var _ = require('lodash');
 
+var mathHelper = require('./math-helper');
+
 var records = [];
 
 module.exports.addRecords = function(filename) {
@@ -68,7 +70,7 @@ var evaluateRecord = function(query, record) {
 		characterMatchWeight = 0.1;
 	
 		// Proximity
-		var distance = haversineDistance(record.lat, record.long, query.latitude, query.longitude);
+		var distance = mathHelper.haversineDistance(record.lat, record.long, query.latitude, query.longitude);
 		
 		if (distance < 25) proximityScore = 1.0;
 		else if (distance < 500) proximityScore = 0.7;
@@ -91,21 +93,6 @@ var evaluateRecord = function(query, record) {
 	var score = characterMatchScore + populationSizeScore + proximityScore;
 
 	return Math.round(score*10)/10;
-}
-
-var haversineDistance = function(lat1, lon1, lat2, lon2) {
-	var R = 6371; // km
-	var φ1 = toRadians(lat1);
-	var φ2 = toRadians(lat2);
-	var Δφ = toRadians(lat2-lat1);
-	var Δλ = toRadians(lon2-lon1);
-
-	var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-	        Math.cos(φ1) * Math.cos(φ2) *
-	        Math.sin(Δλ/2) * Math.sin(Δλ/2);
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-	return R * c;
 }
 
 var getFullLocationName = function(record) {
@@ -133,8 +120,4 @@ var fipsToProvince = function(code) {
 	}
 
 	return "Invalid code";
-}
-
-var toRadians = function(number) {
-	return number * Math.PI / 180;
 }
