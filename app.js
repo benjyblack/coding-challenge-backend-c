@@ -10,9 +10,8 @@ data.addRecords(__dirname + '/data/cities_canada-usa.tsv')
 
 		app.get('/suggestions', function(req, res) {
 			var query = url.parse(req.url, true).query;
-			var name = query.q;
 
-			var records = data.getSimilarRecords(name);
+			var records = data.getSimilarRecords(query);
 			
 			if (records.length > 0)
 				res.json({ suggestions: records });
