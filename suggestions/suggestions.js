@@ -43,6 +43,7 @@ module.exports.getSimilarRecords = function(query) {
 				latitude: record.lat,
 				longitude: record.long,
 				score: evaluateRecord(query, record)
+				// , distance: mathHelper.haversineDistance(record.lat, record.long, query.latitude, query.longitude)
 			});
 		}
 	});
@@ -53,46 +54,41 @@ module.exports.getSimilarRecords = function(query) {
 	return sortedRecords;
 }
 
-// TODO: This, better
 var evaluateRecord = function(query, record) {
-	// Heuristics - proximity, population, character match
-	var proximityWeight = 0.0;
-	var populationSizeWeight = 0.9;
-	var characterMatchWeight = 0.1;
+	// Heuristics - proximity, population
+	var proximityWeight = 0.8;
+	var populationSizeWeight = 0.2;
+	var score;
 
-	var proximityScore = 0.0;
+	// If location values are not provided, we add the proximity heuristic
+	// and adjust accordingly
+	if (typeof(query.latitude) === 'undefined' || typeof(query.longitude) === 'undefined') {
+		proximityWeight = 0.0;
+		populationSizeWeight = 1.0;
 
-	// If location values are provided, we add the proximity heuristic
-	// and adjust the others accordingly
-	if (typeof(query.latitude) !== 'undefined' && typeof(query.longitude) !== 'undefined') {
-		proximityWeight = 0.6;
-		populationSizeWeight = 0.3;
-		characterMatchWeight = 0.1;
-	
-		// Proximity
-		var distance = mathHelper.haversineDistance(record.lat, record.long, query.latitude, query.longitude);
-		
-		if (distance < 25) proximityScore = 1.0;
-		else if (distance < 500) proximityScore = 0.7;
-		else if (distance < 1000) proximityScore = 0.4;
-		else proximityScore = 0.0;
-
-		proximityScore *= proximityWeight;
+		score = evaluatePopulationSize(record.population) * populationSizeWeight;
+	}
+	else {
+		score = evaluatePopulationSize(record.population) * populationSizeWeight 
+			+ evaluateProximity(record.lat, record.long, query.latitude, query.longitude) * proximityWeight;
 	}
 
-	// Population size
-	var threshold = Math.pow(10,6);
-	var populationRatio = Math.min(record.population / threshold, 1.0); 
-	var populationSizeScore = populationRatio * populationSizeWeight;
-
-	// Character match
-	var fullName = getFullLocationName(record);
-	var percentOfChars = query.q.length/fullName.length;
-	var characterMatchScore = percentOfChars * characterMatchWeight;
-
-	var score = characterMatchScore + populationSizeScore + proximityScore;
-
+	// Round to the nearest 1 decimal place
 	return Math.round(score*10)/10;
+}
+
+var evaluatePopulationSize = function(population) {
+	// after 1,000,000 people, all cities get a perfect score for population
+	var upperBound = Math.pow(10,6);
+	return mathHelper.clamp(population / upperBound);
+}
+
+var evaluateProximity = function(lat1, long1, lat2, long2) {
+	// after 10,000km, all scores are 0	
+	var upperBound = 10000;
+	var distance = mathHelper.haversineDistance(lat1, long1, lat2, long2);
+
+	return mathHelper.clamp(1.0 - (distance/upperBound));
 }
 
 var getFullLocationName = function(record) {

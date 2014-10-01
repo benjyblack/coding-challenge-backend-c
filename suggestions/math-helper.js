@@ -16,3 +16,8 @@ module.exports.haversineDistance = function(lat1, lon1, lat2, lon2) {
 
 	return R * c;
 }
+
+
+module.exports.clamp = function(x) {
+	return Math.min(Math.max(x, 0), 1);
+}
